@@ -10,53 +10,62 @@ from skimage import data, io, exposure, filters, restoration, morphology, transf
 #custom code
 from data_to_stl import *
 
-# Open file
-f = fits.open("NGC_4594_SDSS_i bms2014.fits")
-data = f[0].data
+# model size
+size = (50, 50, 5) #x,y,z in mm
 
-# #prep then log data to make peaks less steep
-# data -= data.min()
-# data += 1
-# # data = np.log10(np.log10(data)+1)
-# data = np.log10(data)
+# Open file
+f = fits.open("NGC_5257_SDSS_u.fits")
+data = f[0].data
+raw = data.copy()
 
 # IMAGE PROCESSING
-# scale data resolution
-Nres = int(50//0.3) # rough estimation for needed array length based on nozzle size (0.3) and model size (50)
-scalef = data.shape[0]//Nres
-data = transform.downscale_local_mean(data, (scalef, scalef))
-# chop
-# mask = data > 25
-# data[mask] = 25
+
 #equalize histogram
 data = exposure.equalize_hist(data, nbins=256, mask="none")
+eqhist = data.copy()
+
 # gamma correction
-data = exposure.adjust_gamma(data, 2)
+data = exposure.adjust_gamma(data, 10)
+gamcor = data.copy()
+
 # log correction
-data = exposure.adjust_log(data, 3)
-logcor = data.copy()
+# data = exposure.adjust_log(data, 5)
+# logcor = data.copy()
+
+# chop
+floor = 0.35
+mask = data < floor
+data[mask] = floor
+chopped = data.copy()
+
 # denoise
-# data = restoration.denoise_tv_chambolle(data, weight=0.05, multichannel=False)
+data = restoration.denoise_tv_chambolle(data, weight=0.03, multichannel=False)
+denoise = data.copy()
+
 # tophat filter
-selem = morphology.disk(1)
-res = morphology.white_tophat(data, selem)
-data = data - res
+# selem = morphology.disk(1)
+# res = morphology.white_tophat(data, selem)
+# data = data - res
+# destar = data.copy()
 
 # plot data
-fig = figure()
-frame = fig.add_subplot(2, 2, 1)
-frame.imshow(data, cmap="Greys")
-frame = fig.add_subplot(2, 2, 2)
-frame.hist(data.flatten(), bins=100)
-frame = fig.add_subplot(2, 2, 3)
-frame.imshow(logcor, cmap="Greys")
-frame = fig.add_subplot(2, 2, 4)
-frame.hist(logcor.flatten(), bins=100)
-show()
+if False:
+    imgA = chopped
+    imgB = denoise
 
-size = (50, 50, 11) #x,y,z in mm
+    fig = figure()
+    frame = fig.add_subplot(2, 2, 1)
+    frame.imshow(imgA, cmap="Greys")
+    frame = fig.add_subplot(2, 2, 2)
+    frame.hist(imgA.flatten(), bins=100)
+    frame = fig.add_subplot(2, 2, 3)
+    frame.imshow(imgB, cmap="Greys")
+    frame = fig.add_subplot(2, 2, 4)
+    frame.hist(imgB.flatten(), bins=100)
+    show()
+
 #Creating the list of faces out of the array
-data_to_stl("sombrero_skimaged.stl",data,size)
+data_to_stl("NGC5257_vert.stl", data, size, base_off=3)
 
 #TEST DATA
 # # Initializing value of x-axis and y-axis

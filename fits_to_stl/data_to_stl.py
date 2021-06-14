@@ -2,21 +2,33 @@
 
 #Numpy
 import numpy as  np
-#STL image creator
+#STL creator
 from stl import mesh
+#SKimage
+from skimage import transform
 
-def data_to_stl(filename, input_data, model_size, base_off=1):
+def data_to_stl(filename, input_data, model_size, downscale_factor=None, base_off=1):
     ncols, nrows = input_data.shape
     x_len, y_len, z_len = model_size
     z_max = z_len - base_off
+
+    #downscale data
+    if downscale_factor is None:
+        needed_res = max(x_len, y_len)//0.3 # rough estimation for needed array length based on common nozzle size (0.3) and model size
+        downscale_factor = min(ncols, nrows)//needed_res
+    if downscale_factor > 1:
+        input_data = transform.downscale_local_mean(input_data, (downscale_factor, downscale_factor))
+
     #shift data to start from z=0
     input_data -= input_data.min()
     data_max = input_data.max()
 
     vertices=np.zeros((nrows,ncols,3))
+    checkzs = []
     for x in range(0, ncols):
         for y in range(0, nrows):
             z = input_data[x][y]/data_max*z_max + base_off
+            checkzs.append(z)
             vertices[y][x]=(x/(ncols-1)*x_len, y/(nrows-1)*y_len, z)
 
     faces = facemaker(vertices)
