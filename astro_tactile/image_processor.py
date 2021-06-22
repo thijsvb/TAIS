@@ -29,8 +29,17 @@ class ImageProcessor:
         return self.output_data
 
 class Process:
-    def __init__(self, proc_fun, vars):
-        self.__proc_fun = proc_fun
+    def __init__(self, type, vars=None):
+        procs = {
+            "equal_hist": self.__equal_hist,
+            "gamma_corr": self.__gamma_corr,
+            "log_corr": self.__log_corr,
+            "chop": self.__chop,
+            "denoise": self.__denoise,
+            "destar": self.__destar}
+
+        self.type = type
+        self.__proc_fun = procs[type]
         self.__vars = vars
 
     def set_vars(self, vars, index=None):
@@ -46,42 +55,92 @@ class Process:
     def apply(self, data):
         return self.__proc_fun(data, self.__vars)
 
-class EqualHist(Process):
-    #equalize histogram
-    def __init__(self, nbins=None):
-        super().__init__(self.equal_hist, nbins)
-
-    def equal_hist(self, data, nbins):
+    def __equal_hist(self, data, nbins):
         if nbins is None:
             return exposure.equalize_hist(data)
         else:
             return exposure.equalize_hist(data, nbins)
 
-# gamma correction
-def gamma_corr(data, gamma):
-    return exposure.adjust_gamma(data, gamma)
+    def __gamma_corr(self, data, gamma):
+        return exposure.adjust_gamma(data, gamma)
 
-# log correction
-def log_corr(data, gain):
-    return exposure.adjust_log(data, gain)
+    def __log_corr(self, data, gain):
+        return exposure.adjust_log(data, gain)
 
-# chop
-def chop(data, floor = None, ceil = None):
-    if not floor is None:
-        mask = data < floor
-        data[mask] = floor
-    if not ceil is None:
-        mask = data > ceil
-        data[mask] = ceil
-    return data
+    def __chop(self, data, vars):
+        floor, ceil = vars
+        if not floor is None:
+            mask = data < floor
+            data[mask] = floor
+        if not ceil is None:
+            mask = data > ceil
+            data[mask] = ceil
+        return data
 
-# denoise
-def denoise(data, weight):
-    return restoration.denoise_tv_chambolle(data, weight)
+    def __denoise(self, data, weight):
+        return restoration.denoise_tv_chambolle(data, weight)
 
+    def __destar(self, data, radius):
+        selem = morphology.disk(radius)
+        res = morphology.white_tophat(data, selem)
+        return data - res
 
-# tophat filter star removal
-def destar(data, radius):
-    selem = morphology.disk(radius)
-    res = morphology.white_tophat(data, selem)
-    return data - res
+# class EqualHist(Process):
+#     #equalize histogram
+#     def __init__(self, nbins=None):
+#         super().__init__(self.equal_hist, nbins)
+#
+#     def equal_hist(self, data, nbins):
+#         if nbins is None:
+#             return exposure.equalize_hist(data)
+#         else:
+#             return exposure.equalize_hist(data, nbins)
+#
+# class GammaCorr(Process):
+#     # gamma correction
+#     def __init__(self, gamma):
+#         super().__init__(self.gamma_corr, gamma)
+#
+#     def gamma_corr(self, data, gamma):
+#         return exposure.adjust_gamma(data, gamma)
+#
+# class LogCorr(Process):
+#     # log correction
+#     def __init__(self, gain):
+#         super().__init__(self.log_corr, gain)
+#
+#     def log_corr(self, data, gain):
+#         return exposure.adjust_log(data, gain)
+#
+# class Chop(Process):
+#     # chop
+#     def __init__(self, floor=None, ceil=None):
+#         super().__init__(self.chop, [floor, ceil])
+#
+#     def chop(self, data, vars):
+#         floor, ceil = vars
+#         if not floor is None:
+#             mask = data < floor
+#             data[mask] = floor
+#         if not ceil is None:
+#             mask = data > ceil
+#             data[mask] = ceil
+#         return data
+#
+# class Denoise(Process):
+#     # denoise
+#     def __init__(self, weight):
+#         super().__init__(self.denoise, weight)
+#
+#     def denoise(self, data, weight):
+#         return restoration.denoise_tv_chambolle(data, weight)
+#
+# class Destar(Process):
+#     # tophat filter star removal
+#     def __init__(self, radius):
+#         super().__init__(self.destar, radius)
+#
+#     def destar(self, data, radius):
+#         selem = morphology.disk(radius)
+#         res = morphology.white_tophat(data, selem)
+#         return data - res
