@@ -11,7 +11,7 @@ from skimage import data, io, exposure, filters, restoration, morphology, transf
 from data_to_stl import *
 
 # model size
-size = (80, 80, 5) #x,y,z in mm
+size = (80, 80, 4) #x,y,z in mm
 
 # Open file
 f = fits.open("../../Data/m51_B_band_cor.fits")
@@ -55,9 +55,6 @@ eqhist = data.copy()
 # data = data - res
 # destar = data.copy()
 
-# f = 7
-# data = transform.downscale_local_mean(data, (f, f))
-
 # plot data
 if True:
     imgA = eqhist
@@ -77,7 +74,7 @@ if True:
     show()
 
 
-data_to_stl("m51_B.stl", data, size, base_off=3)
+data_to_stl("m51_B.stl", data, size, base_off=2)
 
 #TEST DATA
 # # Initializing value of x-axis and y-axis

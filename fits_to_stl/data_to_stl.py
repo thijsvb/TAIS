@@ -17,7 +17,12 @@ def data_to_stl(filename, input_data, model_size, downscale_factor=None, base_of
         needed_res = max(x_len, y_len)//0.3 # rough estimation for needed array length based on common nozzle size (0.3) and model size
         downscale_factor = int(min(ncols, nrows)//needed_res)
     if downscale_factor > 1:
+        # this downscale function sometimes produces lower values than are in the original image
+        # to fix this, chop the image back to the old minimum after downscaling
+        floor = input_data.min()
         input_data = transform.downscale_local_mean(input_data, (downscale_factor, downscale_factor))
+        mask = input_data < floor
+        input_data[mask] = floor
     ncols, nrows = input_data.shape
 
     #shift data to start from z=0
@@ -53,7 +58,7 @@ def data_to_stl(filename, input_data, model_size, downscale_factor=None, base_of
 def facemaker(vertices):
     ncols, nrows, xyz = vertices.shape
     faces=[]
-    
+
     #faces for the input array
     for y in range(0, ncols - 1):
         for x in range(0, nrows - 1):
