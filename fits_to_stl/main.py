@@ -11,20 +11,18 @@ from skimage import data, io, exposure, filters, restoration, morphology, transf
 from data_to_stl import *
 
 # model size
-size = (80, 80, 4) #x,y,z in mm
+size = (80, 80, 3) #x,y,z in mm
 
 # Open file
-f = fits.open("../../Data/m51_B_band_cor.fits")
+f = fits.open("../../Data/m101_R_band_cor.fits")
+# f = fits.open("../../Data/m51_V_band_cor.fits")
 data = f[0].data
-# raw = data.copy()
-# f = fits.open("../../Data/m51_R_band_cor.fits")
-# f = fits.open("../../Data/m101_R_band_cor.fits")
 raw = data.copy()
 
 # IMAGE PROCESSING
 
 # chop
-floor, ceil = -15, None
+floor, ceil = -50, None
 if not floor is None:
     mask = data < floor
     data[mask] = floor
@@ -50,14 +48,14 @@ eqhist = data.copy()
 # denoise = data.copy()
 
 # tophat filter
-# selem = morphology.disk(1)
+# selem = morphology.disk(4)
 # res = morphology.white_tophat(data, selem)
 # data = data - res
 # destar = data.copy()
 
 # plot data
 if True:
-    imgA = eqhist
+    imgA = raw
     imgB = data
 
     fig = figure()
@@ -74,7 +72,7 @@ if True:
     show()
 
 
-data_to_stl("m51_B.stl", data, size, base_off=2)
+data_to_stl("m101_R.stl", data, size, base_off=1)
 
 #TEST DATA
 # # Initializing value of x-axis and y-axis

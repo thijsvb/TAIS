@@ -1,8 +1,17 @@
 {
   "galaxy_B": {
     "chop": [-15, null],
-    "equal_hist": null
+    "equal_hist": null,
+    "destar": 4
   },
-  "galaxy_R": {},
-  "galaxy_V": {}
+  "galaxy_R": {
+    "chop": [-100, null],
+    "equal_hist": null,
+    "destar": 4
+  },
+  "galaxy_V": {
+    "chop": [-50, null],
+    "equal_hist": null,
+    "destar": 4
+  }
 }
