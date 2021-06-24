@@ -9,13 +9,30 @@ from astropy.io import fits
 from image_processor import *
 #GUI
 import wx
+#GUI elements class
+from GUI_elements import *
 
 APP_EXIT = 1
 
-class TAIS(wx.Frame, wx.Accessible):
+class TAIS(wx.Frame):
     def __init__(self, *args, **kwargs):
-        super(TAIS, self).__init__(*args, **kwargs)
+        super(TAIS, self).__init__(size=(800, 600), *args, **kwargs)
+
+        # self.font = wx.SystemSettings.GetFont(wx.SYS_SYSTEM_FONT)
+        # self.bold_font = self.font.Bold()
+        self.font = wx.Font(wx.FontInfo())
+        self.bold_font = wx.Font(wx.FontInfo().Bold())
+
         self.InitUI()
+        # Test Data & Processing
+        imgproc = ImageProcessor()
+        imgproc.add_process(Process("equal_hist"))
+        imgproc.add_process(Process("gamma_corr", 3))
+        imgproc.add_process(Process("log_corr",3))
+        imgproc.add_process(Process("chop", [1, 100]))
+        imgproc.add_process(Process("denoise", 0.1))
+        imgproc.add_process(Process("destar", 1))
+        self.processing = ProcessingUI(self, self.proc_vbox, imgproc)
 
     def InitUI(self):
         # Menu
@@ -30,27 +47,27 @@ class TAIS(wx.Frame, wx.Accessible):
         self.SetMenuBar(menubar)
 
         # Layout
-        main_panel = wx.Panel(self)
-        main_panel.SetBackgroundColour("#e0e0ff")
+        self.main_panel = wx.Panel(self)
+        self.main_panel.SetBackgroundColour("#e0e0ff")
 
-        main_hbox = wx.BoxSizer(wx.HORIZONTAL)
+        self.main_hbox = wx.BoxSizer(wx.HORIZONTAL)
 
-        img_vbox = wx.BoxSizer(wx.VERTICAL)
-        st1 = wx.StaticText(main_panel, label="Image Preview")
-        img_vbox.Add(st1)
-        main_hbox.Add(img_vbox, proportion=2, flag=wx.LEFT|wx.RIGHT, border=10)
+        self.img_vbox = wx.BoxSizer(wx.VERTICAL)
+        st1 = wx.StaticText(self.main_panel, label="Image Preview")
+        st1.SetFont(self.bold_font)
+        self.img_vbox.Add(st1)
+        self.main_hbox.Add(self.img_vbox, proportion=2, flag=wx.LEFT|wx.RIGHT, border=10)
 
-        proc_vbox = wx.BoxSizer(wx.VERTICAL)
-        st2 = wx.StaticText(main_panel, label="Processing")
-        proc_vbox.Add(st2)
-        main_hbox.Add(proc_vbox, proportion=1, flag=wx.LEFT|wx.RIGHT, border=10)
+        self.proc_vbox = wx.BoxSizer(wx.VERTICAL)
+        self.main_hbox.Add(self.proc_vbox, proportion=1, flag=wx.LEFT|wx.RIGHT, border=10)
 
-        mod_vbox = wx.BoxSizer(wx.VERTICAL)
-        st3 = wx.StaticText(main_panel, label="Model")
-        mod_vbox.Add(st3)
-        main_hbox.Add(mod_vbox, proportion=1, flag=wx.LEFT|wx.RIGHT, border=10)
+        self.mod_vbox = wx.BoxSizer(wx.VERTICAL)
+        st3 = wx.StaticText(self.main_panel, label="Model")
+        st3.SetFont(self.bold_font)
+        self.mod_vbox.Add(st3)
+        self.main_hbox.Add(self.mod_vbox, proportion=1, flag=wx.LEFT|wx.RIGHT, border=10)
 
-        main_panel.SetSizer(main_hbox)
+        self.main_panel.SetSizer(self.main_hbox)
 
         self.SetTitle('Tactile Astronomical Imaging System')
         self.Centre()

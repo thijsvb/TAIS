@@ -3,7 +3,7 @@ from skimage import data, io, exposure, filters, restoration, morphology, transf
 
 class ImageProcessor:
     def __init__(self):
-        self.__queue = []
+        self.queue = []
         self.input_data = None
         self.output_data = None
 
@@ -16,14 +16,14 @@ class ImageProcessor:
 
     def add_process(self, proc, index=None):
         if index is None:
-            self.__queue.append(proc)
+            self.queue.append(proc)
         else:
-            self.__queue.insert(index, proc)
+            self.queue.insert(index, proc)
         return
 
     def process(self):
         temp_data = self.get_input()
-        for proc in self.__queue:
+        for proc in self.queue:
             temp_data = proc.apply(temp_data)
         self.output_data = temp_data
         return self.output_data
@@ -38,9 +38,22 @@ class Process:
             "denoise": self.__denoise,
             "destar": self.__destar}
 
+        def_vars = {
+            "equal_hist": 256,
+            "gamma_corr": 1,
+            "log_corr": 1,
+            "chop": [None, None],
+            "denoise": 0.1,
+            "destar": 1}
+
         self.type = type
         self.__proc_fun = procs[type]
+        if vars is None:
+            vars = def_vars[type]
         self.__vars = vars
+
+    def set_type(self, type):
+        self.__init__(type)
 
     def set_vars(self, vars, index=None):
         if index is None:
@@ -56,10 +69,7 @@ class Process:
         return self.__proc_fun(data, self.__vars)
 
     def __equal_hist(self, data, nbins):
-        if nbins is None:
-            return exposure.equalize_hist(data)
-        else:
-            return exposure.equalize_hist(data, nbins)
+        return exposure.equalize_hist(data, nbins)
 
     def __gamma_corr(self, data, gamma):
         return exposure.adjust_gamma(data, gamma)
