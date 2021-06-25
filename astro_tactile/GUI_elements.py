@@ -234,7 +234,7 @@ class ImagePreviewUI:
 
     def InitUI(self):
         self.plots_panel = CanvasPanel(self.parent_panel)
-        self.parent_box.Add(self.plots_panel)
+        self.parent_box.Add(self.plots_panel, wx.EXPAND)
         self.parent_box.Add((-1,10))
 
         reset = wx.Button(self.parent_panel, label="Reset to input data")
@@ -255,14 +255,14 @@ from matplotlib.figure import Figure
 class CanvasPanel(wx.Panel):
     def __init__(self, parent):
         wx.Panel.__init__(self, parent)
-        self.figure = Figure(figsize=(3,6))
+        self.figure = Figure(figsize=(4,6))
         self.im_axes = self.figure.add_subplot(2, 1, 1)
         self.hg_axes = self.figure.add_subplot(2, 1, 2)
         self.canvas = FigureCanvas(self, -1, self.figure)
         self.toolbar = NavigationToolbar(self.canvas)
         self.toolbar.Realize()
         self.sizer = wx.BoxSizer(wx.VERTICAL)
-        self.sizer.Add(self.canvas, 1, wx.LEFT | wx.TOP)
+        self.sizer.Add(self.canvas, 1, wx.EXPAND)
         self.sizer.Add(self.toolbar, 0, wx.LEFT | wx.GROW)
         self.SetSizer(self.sizer)
         self.Fit()
@@ -278,3 +278,97 @@ class CanvasPanel(wx.Panel):
         self.figure.colorbar(ims, ax=self.im_axes)
         self.hg_axes.hist(data.flatten(), bins=256)
         self.canvas.draw()
+
+from data_to_stl import *
+from stl import mesh
+
+class ModelUI:
+    def __init__(self, tais):
+        self.tais = tais
+        self.parent_box = tais.mod_vbox
+        self.parent_panel = tais.mod_panel
+
+        self.InitUI()
+
+    def InitUI(self):
+        maxval = int(2**31-1)
+        size_panel, size_box = self.__var_setup("Model size (x,y in mm)")
+        self.xsize = wx.SpinCtrl(size_panel, initial=50, min=1, max=maxval)
+        self.xsize.Bind(wx.EVT_SPINCTRL, self.set_sizex)
+        size_box.Add(self.xsize)
+        self.ysize = wx.SpinCtrl(size_panel, initial=50, min=1, max=maxval)
+        self.ysize.Bind(wx.EVT_SPINCTRL, self.set_sizey)
+        size_box.Add(self.ysize)
+        size_panel.SetSizer(size_box)
+        self.parent_box.Add(size_panel)
+
+        self.size_prop = wx.CheckBox(self.parent_panel, label="Size proportional to data")
+        self.size_prop.SetValue(True)
+        self.size_prop.Bind(wx.EVT_CHECKBOX, self.set_sizex)
+        self.parent_box.Add(self.size_prop)
+
+        zheight_panel, zheight_box = self.__var_setup("Z height in mm")
+        self.zheight = wx.SpinCtrlDouble(zheight_panel, initial=2, min=0.1, max=maxval, inc=0.1)
+        self.zheight.SetDigits(1)
+        zheight_box.Add(self.zheight)
+        zheight_panel.SetSizer(zheight_box)
+        self.parent_box.Add(zheight_panel)
+
+        bpheight_panel, bpheight_box = self.__var_setup("Baseplate height in mm")
+        self.bpheight = wx.SpinCtrlDouble(bpheight_panel, initial=1, min=0.1, max=maxval, inc=0.1)
+        self.bpheight.SetDigits(1)
+        bpheight_box.Add(self.bpheight)
+        bpheight_panel.SetSizer(bpheight_box)
+        self.parent_box.Add(bpheight_panel)
+
+        make_btn = wx.Button(self.parent_panel, label="Make and save STL model")
+        make_btn.Bind(wx.EVT_BUTTON, self.__make_model)
+        self.parent_box.Add(make_btn)
+
+    def __var_setup(self, name):
+        var_panel = wx.Panel(self.parent_panel)
+        var_panel.SetLabel(name)
+        var_box = wx.BoxSizer(wx.HORIZONTAL)
+        st = wx.StaticText(var_panel, label=name+':')
+        st.SetFont(self.tais.font)
+        var_box.Add(st, wx.RIGHT, border=10)
+        return (var_panel, var_box)
+
+    def set_sizex(self, e=None):
+        if self.size_prop.IsChecked():
+            if self.tais.loaded_fits is None:
+                return
+            datax, datay = self.tais.processing.processor.get_input().shape
+            sizey = self.xsize.GetValue() * (datay/datax)
+            sizey = round(sizey)
+            self.ysize.SetValue(sizey)
+
+    def set_sizey(self, e=None):
+        if self.size_prop.IsChecked():
+            if self.tais.loaded_fits is None:
+                return
+            datax, datay = self.tais.processing.processor.get_input().shape
+            sizex = self.ysize.GetValue() * (datax/datay)
+            sizex = round(sizex)
+            self.xsize.SetValue(sizex)
+
+    def __make_model(self, e):
+        data = self.tais.processing.processor.output_data
+        if data is None:
+            return
+        zsize = self.zheight.GetValue() + self.bpheight.GetValue()
+        size = (self.xsize.GetValue(), self.ysize.GetValue(), zsize)
+        mesh = data_to_stl(data, size, base_off=self.bpheight.GetValue())
+
+        with wx.FileDialog(self.tais, "Save STL file", wildcard="STL files (*.stl)|*.stl",
+                       style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT) as fileDialog:
+
+            if fileDialog.ShowModal() == wx.ID_CANCEL:
+                return     # the user changed their mind
+
+            # save the current contents in the file
+            pathname = fileDialog.GetPath()
+            try:
+                mesh.save(pathname)
+            except IOError:
+                wx.LogError("Cannot save current data in file " + pathname)

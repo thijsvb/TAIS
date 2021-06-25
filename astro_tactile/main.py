@@ -36,6 +36,7 @@ class TAIS(wx.Frame):
 
         self.processing = ProcessingUI(self)
         self.image_preview = ImagePreviewUI(self)
+        self.model = ModelUI(self)
 
     def InitUI(self):
         # Menu
@@ -58,22 +59,22 @@ class TAIS(wx.Frame):
 
         self.main_hbox = wx.BoxSizer(wx.HORIZONTAL)
 
-        self.img_panel = wx.Panel(self.main_panel)
+        self.img_panel = wx.Panel(self.main_panel, style=wx.SIMPLE_BORDER)
         self.img_panel.SetLabel("Image Preview")
         self.img_vbox = wx.BoxSizer(wx.VERTICAL)
         st1 = wx.StaticText(self.img_panel, label="Image Preview")
         st1.SetFont(self.bold_font)
         self.img_vbox.Add(st1)
         self.img_panel.SetSizer(self.img_vbox)
-        self.main_hbox.Add(self.img_panel, proportion=2, flag=wx.LEFT|wx.RIGHT, border=10)
+        self.main_hbox.Add(self.img_panel, proportion=1, flag=wx.LEFT|wx.RIGHT, border=10)
 
-        self.proc_panel = wx.Panel(self.main_panel)
+        self.proc_panel = wx.Panel(self.main_panel, style=wx.SIMPLE_BORDER)
         self.proc_panel.SetLabel("Processing queue")
         self.proc_vbox = wx.BoxSizer(wx.VERTICAL)
         self.proc_panel.SetSizer(self.proc_vbox)
         self.main_hbox.Add(self.proc_panel, proportion=1, flag=wx.LEFT|wx.RIGHT, border=10)
 
-        self.mod_panel = wx.Panel(self.main_panel)
+        self.mod_panel = wx.Panel(self.main_panel, style=wx.SIMPLE_BORDER)
         self.mod_panel.SetLabel("Model settings")
         self.mod_vbox = wx.BoxSizer(wx.VERTICAL)
         st3 = wx.StaticText(self.mod_panel, label="Model settings")
@@ -110,6 +111,7 @@ class TAIS(wx.Frame):
         data = fits_file[0].data
         self.processing.processor.set_input(data)
         self.image_preview.plots_panel.draw(data)
+        self.model.set_sizex()
 
 def main():
     app = wx.App()
