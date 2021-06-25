@@ -22,6 +22,10 @@ class ImageProcessor:
         return
 
     def process(self):
+        if self.input_data is None:
+            print("Error: No data given.")
+            return
+        
         temp_data = self.get_input()
         for proc in self.queue:
             temp_data = proc.apply(temp_data)
@@ -30,7 +34,7 @@ class ImageProcessor:
 
 class Process:
     def __init__(self, type, vars=None):
-        procs = {
+        self.__procs = {
             "equal_hist": self.__equal_hist,
             "gamma_corr": self.__gamma_corr,
             "log_corr": self.__log_corr,
@@ -38,22 +42,22 @@ class Process:
             "denoise": self.__denoise,
             "destar": self.__destar}
 
-        def_vars = {
+        self.__def_vars = {
             "equal_hist": 256,
             "gamma_corr": 1,
             "log_corr": 1,
-            "chop": [None, None],
+            "chop": [False, False, -500, 12500],
             "denoise": 0.1,
             "destar": 1}
 
         self.type = type
-        self.__proc_fun = procs[type]
+        self.__proc_fun = self.__procs[type]
         if vars is None:
-            vars = def_vars[type]
+            vars = self.__def_vars[type]
         self.__vars = vars
 
     def set_type(self, type):
-        self.__init__(type)
+        self.__init__(type, None)
 
     def set_vars(self, vars, index=None):
         if index is None:
@@ -62,8 +66,11 @@ class Process:
             self.__vars[index] = vars
         return
 
-    def get_vars(self):
-        return self.__vars.copy()
+    def get_vars(self, index=None):
+        if index is None:
+            return self.__vars
+        else:
+            return self.__vars[index]
 
     def apply(self, data):
         return self.__proc_fun(data, self.__vars)
@@ -78,11 +85,11 @@ class Process:
         return exposure.adjust_log(data, gain)
 
     def __chop(self, data, vars):
-        floor, ceil = vars
-        if not floor is None:
+        floor_on, ceil_on, floor, ceil = vars
+        if floor_on:
             mask = data < floor
             data[mask] = floor
-        if not ceil is None:
+        if ceil_on:
             mask = data > ceil
             data[mask] = ceil
         return data
