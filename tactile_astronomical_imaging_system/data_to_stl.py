@@ -39,7 +39,6 @@ def data_to_stl(input_data, model_size, downscale_factor=None, base_off=1):
 
     faces = facemaker(vertices)
 
-    print(f"number of faces: {len(faces)}")
     facesNp = np.array(faces)
 
     # Create the mesh
