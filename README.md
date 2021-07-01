@@ -1,2 +1,0 @@
-# BScThesis
-My BSc Thesis
