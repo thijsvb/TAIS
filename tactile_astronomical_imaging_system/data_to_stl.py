@@ -47,13 +47,10 @@ def data_to_stl(input_data, model_size, downscale_factor=None, base_off=1):
         for j in range(3):
             surface.vectors[i][j] = facesNp[i][j]
 
-    # Write the mesh to a file so we can print it
-    # surface.save(filename)
     # return mesh to be saved by UI
     return surface
 
 #Function that creates triangles of the model that we want to print from the (x,y,z) positions array that we feed in.
-#Can show the scaling radius as well if parameters are provided
 def facemaker(vertices):
     ncols, nrows, xyz = vertices.shape
     faces=[]

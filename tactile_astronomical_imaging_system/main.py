@@ -25,16 +25,16 @@ class TAIS(wx.Frame):
         self.bold_font = wx.Font(wx.FontInfo().Bold())
 
         self.InitUI()
-        # Test Data & Processing
-        # imgproc = ImageProcessor()
-        # imgproc.add_process(Process("equal_hist"))
-        # imgproc.add_process(Process("gamma_corr", 3))
-        # imgproc.add_process(Process("log_corr",3.0))
-        # imgproc.add_process(Process("chop", [True, True, 0, 100]))
-        # imgproc.add_process(Process("denoise", 0.1))
-        # imgproc.add_process(Process("destar", 1))
+        # intialize with one of each process Processing
+        imgproc = ImageProcessor()
+        imgproc.add_process(Process("chop"))
+        imgproc.add_process(Process("equal_hist"))
+        imgproc.add_process(Process("gamma_corr"))
+        imgproc.add_process(Process("log_corr"))
+        imgproc.add_process(Process("denoise"))
+        imgproc.add_process(Process("destar"))
 
-        self.processing = ProcessingUI(self)
+        self.processing = ProcessingUI(self, imgproc)
         self.image_preview = ImagePreviewUI(self)
         self.model = ModelUI(self)
 
